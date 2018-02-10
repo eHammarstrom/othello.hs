@@ -65,7 +65,12 @@ validMove move board =
     paths = map (walkAndCollect searchCutoff location board) searchDirections
     validPaths             = map (validMovePath player) paths
   in
-    and validPaths
+    freePosition location board && or validPaths
+
+freePosition :: Location -> Board -> Bool
+freePosition l b = case getSquareByLocation l b of
+  Just _ -> False
+  Nothing -> True
 
 negPlayer :: Player -> Player
 negPlayer Black = White
@@ -74,6 +79,7 @@ negPlayer White = Black
 -- This provides the actual valid move definition (2 pieces surrounding only enemy pieces)
 validMovePath :: Player -> [Square] -> Bool
 validMovePath p [] = False
+validMovePath p [_] = False
 validMovePath p ss =
   let negPlayerSquare        = Square (0, 0) (Just (negPlayer p))
       xs                     = reverse ss
