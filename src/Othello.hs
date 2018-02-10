@@ -2,7 +2,7 @@ module Othello where
 
 import Data.List
 import Data.Maybe
--- import Debug.Trace
+import Debug.Trace
 
 othello = "Fun, fun, fun!"
 
@@ -36,11 +36,26 @@ debugPrintBoard''' :: IO ()
 debugPrintBoard''' = putStrLn $ showBoard $ initialBoard 8
 
 debugBoard =
-  [ [(Square (1, 1) (Just Black)), (Square (2, 1) Nothing)]
-  , [(Square (1, 2) Nothing), (Square (2, 2) (Just White))]
+  [ [Square (1, 1) (Just Black), Square (2, 1) Nothing]
+  , [Square (1, 2) Nothing, Square (2, 2) (Just White)]
+  ]
+
+debugBoard' =
+  [ [Square (1, 1) (Just White), Square (2, 1) (Just Black), Square (3, 1) Nothing]
+  , [Square (1, 2) Nothing, Square (2, 2) (Just Black), Square (3, 2) (Just Black)]
+  , [Square (1, 3) (Just White), Square (2, 3) (Just White), Square (3, 3) (Just White)]
   ]
 
 debugValidMove = validMove (Move (0, 0) White) debugBoard
+debugValidMove' = validMove (Move (3, 1) White) debugBoard'
+
+debugState = State { turn = White, board = debugBoard}
+
+-- Should not work, out side of board
+debugEvent = updateState (Move' (0,0) White) debugState
+
+-- Should work, flipping multiple rows and diagonals
+debugEvent' = updateState (Move' (3,1) White) (debugState { board = debugBoard' })
 
 updateState :: Event -> State -> (State, Error)
 updateState e s = case e of
@@ -67,10 +82,17 @@ validMove move board =
   in
     freePosition location board && or validPaths
 
+{- Unused, implicitly being checked in freePosition
+onBoard :: Location -> Board -> Bool
+onBoard (x, y) board = x >= 1 && x <= bound && y >= 1 && y <= bound
+    where
+      bound = fromIntegral $ length board
+-}
+
 freePosition :: Location -> Board -> Bool
 freePosition l b = case getSquareByLocation l b of
-  Just _ -> False
-  Nothing -> True
+  Just (Square _ Nothing) -> True
+  _ -> False
 
 negPlayer :: Player -> Player
 negPlayer Black = White
@@ -110,7 +132,31 @@ walkAndCollect cutoff loc board dir =
   in  catMaybes squares
 
 updateBoard :: Move -> Board -> Board
-updateBoard m b = undefined
+updateBoard move board = 
+  let
+    (Move location player) = move
+    searchCutoff           = fromIntegral $ length board
+    paths = map (walkAndCollect searchCutoff location board) searchDirections
+    squaresToPlace = concatMap (\p -> if validMovePath player p then p else []) paths
+    -- Include the piece being placed
+    squaresToPlace' = (Square location (Just player)) : squaresToPlace
+    squares = map (setColor player) squaresToPlace'
+  in
+    placeSquares squares board
+
+placeSquares :: [Square] -> Board -> Board
+placeSquares ss board =
+  (map . map) (replaceSquare ss) board
+    where
+      replaceSquare [] s = s
+      replaceSquare ((Square loc' p'):ss) (Square loc p) =
+        if loc == loc'
+          then Square loc' p'
+          else replaceSquare ss (Square loc p)
+
+
+setColor :: Player -> Square -> Square
+setColor player (Square pos _) = Square pos (Just player)
 
 getSquareByLocation :: Location -> Board -> Maybe Square
 getSquareByLocation l board = find findSquareOnLocation (concat board)
