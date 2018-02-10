@@ -24,7 +24,7 @@ data State = State { board :: [[Square]]
 
 data Event = Move' Location Player | Turn Player deriving (Eq, Show)
 
-data Error = MoveError | TurnError | Nil deriving (Show)
+data Error = MoveError | TurnError | Nil deriving (Eq, Show)
 
 initialBoard :: Integer -> Board
 initialBoard n = [ [ Square (x, y) Nothing | x <- [1 .. n] ] | y <- [1 .. n] ]
