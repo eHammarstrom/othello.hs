@@ -1,5 +1,6 @@
-module Debug where
+module Test where
 
+import Distribution.TestSuite
 import Othello
 
 debugPrintBoard''' :: IO ()
@@ -28,14 +29,14 @@ debugEvent = updateState (Move' (0,0) White) debugState
 debugEvent' = updateState (Move' (3,1) White) (debugState { board = debugBoard' })
 
 -- Test: 'correct' move outside board
-testEvent =
+eventInvalidMove =
   let (state, err) = debugEvent in
     board state == board debugState
     &&
     err == MoveError
 
--- Test: flip multiple rows
-testEvent' =
+-- Test: flip multiple directions
+eventFlipMultipleDirections =
   let (state, err) = debugEvent' in
     board state == [ [Square (1, 1) (Just White), Square (2, 1) (Just White), Square (3, 1) (Just White)]
                   , [Square (1, 2) Nothing, Square (2, 2) (Just White), Square (3, 2) (Just White)]
@@ -43,3 +44,22 @@ testEvent' =
                   ]
     &&
     err == Nil
+
+-- run tests
+tests :: IO [Test]
+tests = return [ Test invalidMove, Test flipMultiple ]
+  where
+    flipMultiple = TestInstance
+      { run = return $ Finished $ if eventFlipMultipleDirections then Pass else Fail "failed"
+      , name = "flip multiple directions"
+      , tags = []
+      , options = []
+      , setOption = \_ _ -> Right flipMultiple
+      }
+    invalidMove = TestInstance
+      { run = return $ Finished $ if eventInvalidMove then Pass else Fail "failed"
+      , name = "'correct' move outside board"
+      , tags = []
+      , options = []
+      , setOption = \_ _ -> Right invalidMove
+      }
