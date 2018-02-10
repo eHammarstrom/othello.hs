@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 -- The name of the package.
-name:                hothello
+name:                othello.hs
 
 -- The package version.  See the Haskell package versioning policy (PVP)
 -- for standards guiding when and how versions should be incremented.
@@ -19,7 +19,7 @@ synopsis:            Othello
 -- description:
 
 -- URL for the project homepage or repository
-homepage:            https://github.com/ehammarstrom
+homepage:            https://github.com/ehammarstrom/othello.hs
 
 -- The license under which the package is released.
 license:             MIT
