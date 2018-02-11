@@ -12,52 +12,85 @@ debugBoard =
   ]
 
 debugBoard' =
-  [ [Square (1, 1) (Just White), Square (2, 1) (Just Black), Square (3, 1) Nothing]
-  , [Square (1, 2) Nothing, Square (2, 2) (Just Black), Square (3, 2) (Just Black)]
-  , [Square (1, 3) (Just White), Square (2, 3) (Just White), Square (3, 3) (Just White)]
+  [ [ Square (1, 1) (Just White)
+    , Square (2, 1) (Just Black)
+    , Square (3, 1) Nothing
+    ]
+  , [ Square (1, 2) Nothing
+    , Square (2, 2) (Just Black)
+    , Square (3, 2) (Just Black)
+    ]
+  , [ Square (1, 3) (Just White)
+    , Square (2, 3) (Just White)
+    , Square (3, 3) (Just White)
+    ]
   ]
 
 debugValidMove = validMove (Move (0, 0) White) debugBoard
+
 debugValidMove' = validMove (Move (3, 1) White) debugBoard'
 
-debugState = State { turn = White, board = debugBoard}
+debugState = State {turn = White, board = debugBoard}
 
 -- Should not work, out side of board
-debugEvent = updateState (Move' (0,0) White) debugState
+debugEvent = updateState (Move' (0, 0) White) debugState
 
 -- Should work, flipping multiple rows and diagonals
-debugEvent' = updateState (Move' (3,1) White) (debugState { board = debugBoard' })
+debugEvent' =
+  updateState (Move' (3, 1) White) (debugState {board = debugBoard'})
 
 -- Test: 'correct' move outside board
 eventInvalidMove =
-  let (state, err) = debugEvent in
-    board state == board debugState
-    &&
-    err == MoveError
+  case debugEvent of
+    Right _ -> False
+    Left MoveError -> True
+    Left _ -> False
 
 -- Test: flip multiple directions
 eventFlipMultipleDirections =
-  let (state, err) = debugEvent' in
-    board state == [ [Square (1, 1) (Just White), Square (2, 1) (Just White), Square (3, 1) (Just White)]
-                  , [Square (1, 2) Nothing, Square (2, 2) (Just White), Square (3, 2) (Just White)]
-                  , [Square (1, 3) (Just White), Square (2, 3) (Just White), Square (3, 3) (Just White)]
-                  ]
-    &&
-    err == Nil
+  case debugEvent' of
+    Right state ->
+      board state ==
+      [ [ Square (1, 1) (Just White)
+        , Square (2, 1) (Just White)
+        , Square (3, 1) (Just White)
+        ]
+      , [ Square (1, 2) Nothing
+        , Square (2, 2) (Just White)
+        , Square (3, 2) (Just White)
+        ]
+      , [ Square (1, 3) (Just White)
+        , Square (2, 3) (Just White)
+        , Square (3, 3) (Just White)
+        ]
+      ]
+    Left _ -> False
 
 -- run tests
 tests :: IO [Test]
-tests = return [ Test invalidMove, Test flipMultiple ]
+tests = return [Test invalidMove, Test flipMultiple]
   where
-    flipMultiple = TestInstance
-      { run = return $ Finished $ if eventFlipMultipleDirections then Pass else Fail "failed"
+    flipMultiple =
+      TestInstance
+      { run =
+          return $
+          Finished $
+          if eventFlipMultipleDirections
+            then Pass
+            else Fail "failed"
       , name = "flip multiple directions"
       , tags = []
       , options = []
       , setOption = \_ _ -> Right flipMultiple
       }
-    invalidMove = TestInstance
-      { run = return $ Finished $ if eventInvalidMove then Pass else Fail "failed"
+    invalidMove =
+      TestInstance
+      { run =
+          return $
+          Finished $
+          if eventInvalidMove
+            then Pass
+            else Fail "failed"
       , name = "'correct' move outside board"
       , tags = []
       , options = []
